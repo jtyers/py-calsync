@@ -72,8 +72,8 @@ def test_list_events():
     assert result == expected_result
 
 
-def test_create_event():
-    create_event_result = {
+def test_import_event():
+    import_event_result = {
         "summary": "foo",
         "start": "2020-06-01T16:16:12Z",
     }
@@ -83,11 +83,11 @@ def test_create_event():
     )
 
     calendar_service = Mock()
-    calendar_service.create_event = Mock(return_value=create_event_result)
+    calendar_service.import_event = Mock(return_value=import_event_result)
 
     get_calendar_service = Mock(return_value=calendar_service)
 
     with patch("calsync.calendar.get_calendar_service", get_calendar_service):
-        result = Calendar(id="calid").create_event(expected_result)
+        result = Calendar(id="calid").import_event(expected_result)
 
     assert result == expected_result

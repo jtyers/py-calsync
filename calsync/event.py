@@ -1,3 +1,16 @@
+from copy import deepcopy
+
+
+COPY_FIELDS = [
+    "start",
+    "iCalUID",
+    "end",
+    "summary",
+    "description",
+    "location",
+]
+
+
 class Event:
     def __init__(self, **attributes):
         self.attributes = attributes
@@ -22,3 +35,11 @@ class Event:
         return (
             "Event(" + ", ".join([f"{k}={v}" for k, v in self.attributes.items()]) + ")"
         )
+
+    def copy(self):
+        new_attrs = {}
+        for k in COPY_FIELDS:
+            if k in self.attributes:
+                new_attrs[k] = self.attributes[k]
+
+        return Event(**new_attrs)

@@ -6,7 +6,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 # If modifying these scopes, delete the file token.json.
-SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
+SCOPES = [
+    "https://www.googleapis.com/auth/calendar",
+]
 
 CREDENTIALS_FILE = "credentials.json"
 TOKEN_FILE = "token.json"
@@ -16,7 +18,8 @@ CALLBACK_LISTEN_PORT = 56133
 __cached_service = None
 
 
-def __get_underlying_calendar_service(self):
+def __get_underlying_calendar_service():
+    global __cached_service
     if __cached_service is None:
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
@@ -55,13 +58,17 @@ class CalendarService:
         self.service = service
 
     def list_calendars(self, **kwargs):
-        result = self.get_calendar_service().calendarList().list(**kwargs).execute()
+        result = self.service.calendarList().list(**kwargs).execute()
         return result.get("items", [])
 
     def list_events(self, **kwargs):
-        result = self.get_calendar_service().events().list(**kwargs).execute()
+        result = self.service.events().list(**kwargs).execute()
         return result.get("items", [])
 
-    def create_event(self, **kwargs):
-        result = self.get_calendar_service().events().insert(**kwargs).execute()
+    def insert_event(self, **kwargs):
+        result = self.service.events().insert(**kwargs).execute()
+        return result
+
+    def import_event(self, **kwargs):
+        result = self.service.events().import_(**kwargs).execute()
         return result

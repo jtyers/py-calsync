@@ -1,10 +1,11 @@
 from datetime import datetime
+import logging
 
 from calsync.config import get_config
 from calsync.calendar import resolve_calendar
+from calsync.event import Event
 
 from calsync.util import parse_timedelta_string
-from calsync.util import now
 
 COPY_DEFAULTS = {
     "method": "copy",
@@ -41,9 +42,12 @@ def __run_copy_rule(rule):
     )
 
     events = src.list_events(
-        timeMin=(datetime.utcnow() - look_back).isoformat(),
-        timeMax=(datetime.utcnow() + look_forward).isoformat(),
+        timeMin=(datetime.utcnow() - look_back).isoformat() + "Z",
+        timeMax=(datetime.utcnow() + look_forward).isoformat() + "Z",
     )
+    logging.info(f"found {len(events)} to copy", events=events)
 
     for event in events:
-        dst.create_event(event)
+        new_event = event.copy()
+        logging.info("creating event in dst", event=new_event)
+        dst.import_event(new_event)

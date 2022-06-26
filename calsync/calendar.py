@@ -5,6 +5,22 @@ from calsync.util import now
 from calsync.event import Event
 
 
+# list of fields to clear for import/insert operations
+READ_ONLY_EVENT_ATTRIBUTES = [
+    #   "anyoneCanAddSelf",
+    #   "created",
+    #   "updated",
+    #   "creator",
+    #   "hangoutLink",
+    #   "kind",
+    #   "etag",
+    #   "id",
+    #   "status",
+    #   "htmlLink",
+    #   "eventType",
+]
+
+
 class Calendar:
     def __init__(self, **attributes):
         self.attributes = attributes
@@ -51,13 +67,12 @@ class Calendar:
         )
         return [Event(calendarId=self.id, **evt) for evt in events_result]
 
-    def create_event(self, event):
-        new_attrs = deepcopy(event.attributes)
-        del new_attrs["calendarId"]
+    def import_event(self, event):
+        new_event = event.copy()
 
-        events_result = get_calendar_service().create_event(
+        events_result = get_calendar_service().import_event(
             calendarId=self.id,
-            **new_attrs,
+            body=new_event.attributes,
         )
         return Event(calendarId=self.id, **events_result)
 

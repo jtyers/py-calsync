@@ -9,6 +9,7 @@ from calsync.rules import COPY_DEFAULTS
 from calsync.rules import run_rules
 from calsync.event import Event
 from calsync.util import parse_timedelta_string
+from calsync.util import datetime_to_rfc3339
 
 
 def test_run_copy_rule():
@@ -26,8 +27,15 @@ def test_run_copy_rule():
         Event(id="789", summary="Event 789", start="2020-07-17T13:13:13Z"),
     ]
 
+    # source_events with id removed
+    expected_events = [
+        Event(summary="Event 123", start="2020-01-11T11:11:11Z"),
+        Event(summary="Event 456", start="2020-04-14T12:12:12Z"),
+        Event(summary="Event 789", start="2020-07-17T13:13:13Z"),
+    ]
+
     calendar_foo.list_events = Mock(return_value=source_events)
-    calendar_bar.create_event = Mock()
+    calendar_bar.import_event = Mock()
 
     resolve_calendar_result = {
         "foo": calendar_foo,
@@ -51,13 +59,14 @@ def test_run_copy_rule():
                 run_rules()
 
     calendar_foo.list_events.assert_called_with(
-        timeMin=now_min.isoformat(), timeMax=now_max.isoformat()
+        timeMin=datetime_to_rfc3339(now_min),
+        timeMax=datetime_to_rfc3339(now_max),
     )
 
-    calendar_bar.create_event.assert_has_calls(
+    calendar_bar.import_event.assert_has_calls(
         [
-            call(source_events[0]),
-            call(source_events[1]),
-            call(source_events[2]),
+            call(expected_events[0]),
+            call(expected_events[1]),
+            call(expected_events[2]),
         ]
     )
