@@ -16,8 +16,7 @@ CALLBACK_LISTEN_PORT = 56133
 __cached_service = None
 
 
-def get_calendar_service():
-    global __cached_service
+def __get_underlying_calendar_service(self):
     if __cached_service is None:
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
@@ -41,3 +40,28 @@ def get_calendar_service():
         __cached_service = build("calendar", "v3", credentials=creds)
 
     return __cached_service
+
+
+def get_calendar_service():
+    underlying = __get_underlying_calendar_service()
+    return CalendarService(service=underlying)
+
+
+class CalendarService:
+    """Wrapper around the Google Calendar Service API, to make mocking/testing much
+    easier."""
+
+    def __init__(self, service):
+        self.service = service
+
+    def list_calendars(self, **kwargs):
+        result = self.get_calendar_service().calendarList().list(**kwargs).execute()
+        return result.get("items", [])
+
+    def list_events(self, **kwargs):
+        result = self.get_calendar_service().events().list(**kwargs).execute()
+        return result.get("items", [])
+
+    def create_event(self, **kwargs):
+        result = self.get_calendar_service().events().insert(**kwargs).execute()
+        return result

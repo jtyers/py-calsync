@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from calsync.service import get_calendar_service
 from calsync.util import now
 from calsync.event import Event
@@ -11,32 +13,85 @@ class Calendar:
         for k in ["id", "summary", "summaryOverride"]:
             setattr(self, k, attributes.get(k))
 
-    def events(
-        self, timeMin=now(), maxResults=30, singleEvents=True, orderBy="startTime"
+    def __eq__(self, other):
+        if type(other) is not Calendar:
+            return False
+
+        for a in self.attributes:
+            if a not in other.attributes:
+                return False
+            if other.attributes[a] != self.attributes[a]:
+                return False
+
+        return True
+
+    def __repr__(self):
+        return (
+            "Calendar("
+            + ", ".join([f"{k}={v}" for k, v in self.attributes.items()])
+            + ")"
+        )
+
+    def list_events(
+        self,
+        timeMin=now(),
+        timeMax=None,
+        maxResults=30,
+        singleEvents=True,
+        orderBy="startTime",
     ):
         # Call the Calendar API
-        events_result = (
-            get_calendar_service()
-            .events()
-            .list(
-                calendarId=self.id,
-                timeMin=timeMin,
-                maxResults=maxResults,
-                singleEvents=singleEvents,
-                orderBy=orderBy,
-            )
-            .execute()
+        events_result = get_calendar_service().list_events(
+            calendarId=self.id,
+            timeMin=timeMin,
+            timeMax=timeMax,
+            maxResults=maxResults,
+            singleEvents=singleEvents,
+            orderBy=orderBy,
         )
-        return [
-            Event(calendarId=self.id, **evt) for evt in events_result.get("items", [])
-        ]
+        return [Event(calendarId=self.id, **evt) for evt in events_result]
+
+    def create_event(self, event):
+        new_attrs = deepcopy(event.attributes)
+        del new_attrs["calendarId"]
+
+        events_result = get_calendar_service().create_event(
+            calendarId=self.id,
+            **new_attrs,
+        )
+        return Event(calendarId=self.id, **events_result)
+
+
+__cached_callist = None
 
 
 def get_calendars():
-    callist_result = get_calendar_service().calendarList().list(maxResults=50).execute()
-    callist = callist_result.get("items", [])
+    global __cached_callist
 
-    if not callist:
-        return []
+    if __cached_callist is None:
+        callist = get_calendar_service().list_calendars(maxResults=50)
 
-    return [Calendar(**cal) for cal in callist]
+        if not callist:
+            __cached_callist = []
+        else:
+            __cached_callist = [Calendar(**cal) for cal in callist]
+
+    return __cached_callist
+
+
+def resolve_calendar(input):
+    """Resolves the input to either a calendar name (summary) or ID"""
+    DISALLOWED_SUMMARIES = ["Calendar"]
+
+    if input in DISALLOWED_SUMMARIES:
+        raise ValueError(f"disallowed summary input: {input}")
+
+    for calendar in get_calendars():
+        if calendar.summary == input:
+            return calendar
+        if calendar.summaryOverride == input:
+            return calendar
+        if calendar.id == input:
+            return calendar
+
+    raise ValueError(f'unknown calendar "${input}"')
