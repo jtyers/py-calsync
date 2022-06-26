@@ -1,0 +1,9 @@
+# py-calsync syncing is configured via the rules section. No syncing
+# takes place except where there is a rule for the sync to happen.
+rules:
+  - method: copy
+    src: Main calendar
+    dst: Combined calendar
+
+    look_back: 1 day
+    look_forward: 1 day

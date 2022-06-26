@@ -8,9 +8,13 @@ from calsync.event import Event
 from calsync.util import parse_timedelta_string
 
 COPY_DEFAULTS = {
+    # the method to use
     "method": "copy",
+    # the period of time to look back and forward for events to copy
     "look_back": "1 week",
     "look_forward": "12 weeks",
+    # if True, mark copied events as private, which prevents event propagation
+    "private_copy": True,
 }
 
 
@@ -49,5 +53,10 @@ def __run_copy_rule(rule):
 
     for event in events:
         new_event = event.copy()
+
+        private_copy = rule.get("private_copy", COPY_DEFAULTS["private_copy"])
+        if private_copy:
+            new_event.attributes["privateCopy"] = True
+
         logging.info("creating event in dst", event=new_event)
         dst.import_event(new_event)

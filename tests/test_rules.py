@@ -29,9 +29,9 @@ def test_run_copy_rule():
 
     # source_events with id removed
     expected_events = [
-        Event(summary="Event 123", start="2020-01-11T11:11:11Z"),
-        Event(summary="Event 456", start="2020-04-14T12:12:12Z"),
-        Event(summary="Event 789", start="2020-07-17T13:13:13Z"),
+        Event(summary="Event 123", start="2020-01-11T11:11:11Z", privateCopy=True),
+        Event(summary="Event 456", start="2020-04-14T12:12:12Z", privateCopy=True),
+        Event(summary="Event 789", start="2020-07-17T13:13:13Z", privateCopy=True),
     ]
 
     calendar_foo.list_events = Mock(return_value=source_events)
