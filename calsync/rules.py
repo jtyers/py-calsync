@@ -58,5 +58,21 @@ def __run_copy_rule(rule):
         if private_copy:
             new_event.attributes["privateCopy"] = True
 
+        __transform(rule, new_event, src=src)
+
         logging.info("creating event in dst", event=new_event)
         dst.import_event(new_event)
+
+
+def __transform(rule, event, src=None):
+    if not rule.get("transform"):
+        return
+
+    if rule["transform"].get("description_append"):
+        event.attributes["description"] = (
+            event.attributes["description"]
+            + "\n\n"
+            + rule["transform"]["description_append"]
+            .replace("$calendar_id", src.id)
+            .replace("$calendar_summary", src.summary)
+        )
