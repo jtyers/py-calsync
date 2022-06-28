@@ -52,6 +52,9 @@ def __run_copy_rule(rule):
     logging.info(f"found {len(events)} to copy", events=events)
 
     for event in events:
+        if not __matches_filters(rule, event):
+            continue
+
         new_event = event.copy()
 
         private_copy = rule.get("private_copy", COPY_DEFAULTS["private_copy"])
@@ -64,7 +67,20 @@ def __run_copy_rule(rule):
         dst.import_event(new_event)
 
 
-def __transform(rule, event, src=None):
+def __matches_filters(rule, event):
+    result = True
+
+    for filter_ in rule.get("filter", []):
+        match = filter_["match"]
+
+        if "all_day_event" in match:
+            if event.is_all_day() != match["all_day_event"]:
+                return False
+
+    return result
+
+
+def __transform(rule, event, src):
     if not rule.get("transform"):
         return
 

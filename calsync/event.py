@@ -43,3 +43,13 @@ class Event:
                 new_attrs[k] = self.attributes[k]
 
         return Event(**new_attrs)
+
+    def is_all_day(self):
+        _start = self.attributes.get("start", {})
+        _end = self.attributes.get("end", {})
+        return (
+            "dateTime" not in _start
+            and "date" in _start
+            and "dateTime" not in _end
+            and "date" in _end
+        )

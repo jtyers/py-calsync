@@ -7,3 +7,6 @@ rules:
 
     look_back: 1 day
     look_forward: 1 day
+
+    transform:
+      - description_append: From $calendar_summary ($calendar_id).

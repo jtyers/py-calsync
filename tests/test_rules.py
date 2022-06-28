@@ -1,3 +1,5 @@
+import pytest
+
 from contextlib import contextmanager
 from datetime import datetime
 
@@ -121,26 +123,82 @@ def __run_copy_rule_test(
             cal.import_event.assert_has_calls([call(e) for e in expected_events])
 
 
-def test_run_copy_rule():
+def __new_event(from_, del_=[], **kwargs):
+    newattrs = from_.attributes.copy()
+    for d in del_:
+        del newattrs[d]
+    for k, v in kwargs.items():
+        newattrs[k] = v
+    return Event(**newattrs)
+
+
+@pytest.fixture
+def event123():
+    return Event(
+        id="123",
+        summary="Event 123",
+        description="Event 123",
+        start="2020-01-11T11:11:11Z",
+    )
+
+
+@pytest.fixture
+def event456():
+    return Event(
+        id="456",
+        summary="Event 456",
+        description="Event 456",
+        start="2020-04-14T12:12:12Z",
+    )
+
+
+@pytest.fixture
+def event123_all_day():
+    return Event(
+        id="123",
+        summary="Event 123",
+        description="Event 123",
+        start={"date": "2020-01-11"},
+        end={"date": "2020-01-12"},
+    )
+
+
+@pytest.fixture
+def event456_all_day():
+    return Event(
+        id="456",
+        summary="Event 456",
+        description="Event 456",
+        start={"date": "2020-04-14"},
+        end={"date": "2020-04-14"},
+    )
+
+
+@pytest.fixture
+def event789():
+    return Event(
+        id="789",
+        summary="Event 789",
+        description="Event 789",
+        start="2020-07-17T13:13:13Z",
+    )
+
+
+def test_run_copy_rule(event123, event456, event789):
     config = {"rules": [{"method": "copy", "src": "cs_foo", "dst": "cs_bar"}]}
 
     __run_copy_rule_test(
         config,
-        foo_events=[
-            Event(id="123", summary="Event 123", start="2020-01-11T11:11:11Z"),
-            Event(id="456", summary="Event 456", start="2020-04-14T12:12:12Z"),
-            Event(id="789", summary="Event 789", start="2020-07-17T13:13:13Z"),
-        ],
+        foo_events=[event123, event456, event789],
         bar_expected_events=[
-            # input events with id removed
-            Event(summary="Event 123", start="2020-01-11T11:11:11Z", privateCopy=True),
-            Event(summary="Event 456", start="2020-04-14T12:12:12Z", privateCopy=True),
-            Event(summary="Event 789", start="2020-07-17T13:13:13Z", privateCopy=True),
+            __new_event(from_=event123, del_=["id"], privateCopy=True),
+            __new_event(from_=event456, del_=["id"], privateCopy=True),
+            __new_event(from_=event789, del_=["id"], privateCopy=True),
         ],
     )
 
 
-def test_run_copy_rule_3_calendars():
+def test_run_copy_rule_3_calendars(event123, event456, event789):
     config = {
         "rules": [
             {"method": "copy", "src": "cs_foo", "dst": "cs_bar"},
@@ -150,25 +208,21 @@ def test_run_copy_rule_3_calendars():
 
     __run_copy_rule_test(
         config,
-        foo_events=[
-            Event(id="123", summary="Event 123", start="2020-01-11T11:11:11Z"),
-            Event(id="456", summary="Event 456", start="2020-04-14T12:12:12Z"),
-            Event(id="789", summary="Event 789", start="2020-07-17T13:13:13Z"),
-        ],
+        foo_events=[event123, event456, event789],
         bar_expected_events=[
-            Event(summary="Event 123", start="2020-01-11T11:11:11Z", privateCopy=True),
-            Event(summary="Event 456", start="2020-04-14T12:12:12Z", privateCopy=True),
-            Event(summary="Event 789", start="2020-07-17T13:13:13Z", privateCopy=True),
+            __new_event(from_=event123, del_=["id"], privateCopy=True),
+            __new_event(from_=event456, del_=["id"], privateCopy=True),
+            __new_event(from_=event789, del_=["id"], privateCopy=True),
         ],
         baz_expected_events=[
-            Event(summary="Event 123", start="2020-01-11T11:11:11Z", privateCopy=True),
-            Event(summary="Event 456", start="2020-04-14T12:12:12Z", privateCopy=True),
-            Event(summary="Event 789", start="2020-07-17T13:13:13Z", privateCopy=True),
+            __new_event(from_=event123, del_=["id"], privateCopy=True),
+            __new_event(from_=event456, del_=["id"], privateCopy=True),
+            __new_event(from_=event789, del_=["id"], privateCopy=True),
         ],
     )
 
 
-def test_run_copy_rule_with_disabled_private_copy():
+def test_run_copy_rule_with_disabled_private_copy(event123, event456, event789):
     config = {
         "rules": [
             {"method": "copy", "src": "cs_foo", "dst": "cs_bar", "private_copy": False}
@@ -177,20 +231,16 @@ def test_run_copy_rule_with_disabled_private_copy():
 
     __run_copy_rule_test(
         config,
-        foo_events=[
-            Event(id="123", summary="Event 123", start="2020-01-11T11:11:11Z"),
-            Event(id="456", summary="Event 456", start="2020-04-14T12:12:12Z"),
-            Event(id="789", summary="Event 789", start="2020-07-17T13:13:13Z"),
-        ],
+        foo_events=[event123, event456, event789],
         bar_expected_events=[
-            Event(summary="Event 123", start="2020-01-11T11:11:11Z"),
-            Event(summary="Event 456", start="2020-04-14T12:12:12Z"),
-            Event(summary="Event 789", start="2020-07-17T13:13:13Z"),
+            __new_event(from_=event123, del_=["id"]),
+            __new_event(from_=event456, del_=["id"]),
+            __new_event(from_=event789, del_=["id"]),
         ],
     )
 
 
-def test_run_copy_rule_with_different_look_back_forward():
+def test_run_copy_rule_with_different_look_back_forward(event123, event456, event789):
     config = {
         "rules": [
             {
@@ -206,22 +256,18 @@ def test_run_copy_rule_with_different_look_back_forward():
 
     __run_copy_rule_test(
         config,
-        foo_events=[
-            Event(id="123", summary="Event 123", start="2020-01-11T11:11:11Z"),
-            Event(id="456", summary="Event 456", start="2020-04-14T12:12:12Z"),
-            Event(id="789", summary="Event 789", start="2020-07-17T13:13:13Z"),
-        ],
+        foo_events=[event123, event456, event789],
         bar_expected_events=[
-            Event(summary="Event 123", start="2020-01-11T11:11:11Z"),
-            Event(summary="Event 456", start="2020-04-14T12:12:12Z"),
-            Event(summary="Event 789", start="2020-07-17T13:13:13Z"),
+            __new_event(from_=event123, del_=["id"]),
+            __new_event(from_=event456, del_=["id"]),
+            __new_event(from_=event789, del_=["id"]),
         ],
         expected_look_back="3 days",
         expected_look_forward="3 days",
     )
 
 
-def test_run_copy_rule_with_description_append_transform():
+def test_run_copy_rule_with_description_append_transform(event123, event456, event789):
     config = {
         "rules": [
             {
@@ -237,44 +283,72 @@ def test_run_copy_rule_with_description_append_transform():
 
     __run_copy_rule_test(
         config,
-        foo_events=[
-            Event(
-                id="123",
-                summary="Event 123",
-                description="Event 123",
-                start="2020-01-11T11:11:11Z",
+        foo_events=[event123, event456, event789],
+        bar_expected_events=[
+            __new_event(
+                from_=event123,
+                del_=["id"],
+                privateCopy=True,
+                description="Event 123\n\nFoo cid_foo cs_foo Bar",
             ),
-            Event(
-                id="456",
-                summary="Event 456",
-                description="Event 456",
-                start="2020-04-14T12:12:12Z",
+            __new_event(
+                from_=event456,
+                del_=["id"],
+                privateCopy=True,
+                description="Event 456\n\nFoo cid_foo cs_foo Bar",
             ),
-            Event(
-                id="789",
-                summary="Event 789",
-                description="Event 789",
-                start="2020-07-17T13:13:13Z",
+            __new_event(
+                from_=event789,
+                del_=["id"],
+                privateCopy=True,
+                description="Event 789\n\nFoo cid_foo cs_foo Bar",
             ),
         ],
+    )
+
+
+def test_run_copy_rule_with_all_day_events_filtered_out(
+    event123_all_day, event456_all_day, event789
+):
+    config = {
+        "rules": [
+            {
+                "method": "copy",
+                "src": "cs_foo",
+                "dst": "cs_bar",
+                "filter": [{"match": {"all_day_event": False}}],
+            }
+        ]
+    }
+
+    __run_copy_rule_test(
+        config,
+        foo_events=[event123_all_day, event456_all_day, event789],
         bar_expected_events=[
-            Event(
-                summary="Event 123",
-                description="Event 123\n\nFoo cid_foo cs_foo Bar",
-                start="2020-01-11T11:11:11Z",
-                privateCopy=True,
-            ),
-            Event(
-                summary="Event 456",
-                description="Event 456\n\nFoo cid_foo cs_foo Bar",
-                start="2020-04-14T12:12:12Z",
-                privateCopy=True,
-            ),
-            Event(
-                summary="Event 789",
-                description="Event 789\n\nFoo cid_foo cs_foo Bar",
-                start="2020-07-17T13:13:13Z",
-                privateCopy=True,
-            ),
+            __new_event(from_=event789, del_=["id"], privateCopy=True),
+        ],
+    )
+
+
+def test_run_copy_rule_with_all_day_events_only(
+    event123_all_day, event456_all_day, event789
+):
+    config = {
+        "rules": [
+            {
+                "method": "copy",
+                "src": "cs_foo",
+                "dst": "cs_bar",
+                "filter": [{"match": {"all_day_event": True}}],
+            }
+        ]
+    }
+
+    __run_copy_rule_test(
+        config,
+        foo_events=[event123_all_day, event456_all_day, event789],
+        bar_expected_events=[
+            __new_event(from_=event123_all_day, del_=["id"], privateCopy=True),
+            __new_event(from_=event456_all_day, del_=["id"], privateCopy=True),
         ],
     )
