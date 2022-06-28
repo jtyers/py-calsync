@@ -10,3 +10,29 @@ rules:
 
     transform:
       - description_append: From $calendar_summary ($calendar_id).
+  
+  - method: copy
+    src: Omnigen
+    dst: Combined calendar
+
+    look_back: 1 day
+    look_forward: 1 day
+
+    filter:
+      all_day_event: false
+
+    transform:
+      - description_append: From $calendar_summary ($calendar_id).
+  
+  - method: copy
+    src: NBS
+    dst: Combined calendar
+
+    look_back: 1 day
+    look_forward: 1 day
+
+    filter:
+      all_day_event: false
+
+    transform:
+      - description_append: From $calendar_summary ($calendar_id).

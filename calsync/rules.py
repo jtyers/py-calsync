@@ -84,11 +84,12 @@ def __transform(rule, event, src):
     if not rule.get("transform"):
         return
 
-    if rule["transform"].get("description_append"):
-        event.attributes["description"] = (
-            event.attributes["description"]
-            + "\n\n"
-            + rule["transform"]["description_append"]
-            .replace("$calendar_id", src.id)
-            .replace("$calendar_summary", src.summary)
-        )
+    for transform in rule["transform"]:
+        if transform.get("description_append"):
+            event.attributes["description"] = (
+                event.attributes["description"]
+                + "\n\n"
+                + transform["description_append"]
+                .replace("$calendar_id", src.id)
+                .replace("$calendar_summary", src.summary)
+            )

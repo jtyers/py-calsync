@@ -267,16 +267,18 @@ def test_run_copy_rule_with_different_look_back_forward(event123, event456, even
     )
 
 
-def test_run_copy_rule_with_description_append_transform(event123, event456, event789):
+def test_run_copy_rule_with_description_append_transform_with_variables(
+    event123, event456, event789
+):
     config = {
         "rules": [
             {
                 "method": "copy",
                 "src": "cs_foo",
                 "dst": "cs_bar",
-                "transform": {
-                    "description_append": "Foo $calendar_id $calendar_summary Bar"
-                },
+                "transform": [
+                    {"description_append": "Foo $calendar_id $calendar_summary Bar"}
+                ],
             }
         ]
     }
