@@ -1,4 +1,8 @@
+import logging
+
 from calsync.rules import run_rules
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def main():

@@ -1,13 +1,20 @@
 from copy import deepcopy
 
 
-COPY_FIELDS = [
-    "start",
-    "iCalUID",
-    "end",
-    "summary",
-    "description",
-    "location",
+COPY_SKIP_FIELDS = [
+    "anyoneCanAddSelf",  # deprecated
+    "attendees",  # to avoid triggering emails
+    "colorId",  # intentional so copied event appears different
+    "created",  # ro
+    "creator",  # ro
+    "etag",
+    "hangoutLink",  # ro
+    "htmlLink",
+    "id",
+    "organizer",
+    "reminders",
+    "sequence",
+    "updated",  # ro
 ]
 
 
@@ -38,8 +45,8 @@ class Event:
 
     def copy(self):
         new_attrs = {}
-        for k in COPY_FIELDS:
-            if k in self.attributes:
+        for k in self.attributes:
+            if k not in COPY_SKIP_FIELDS:
                 new_attrs[k] = self.attributes[k]
 
         return Event(**new_attrs)

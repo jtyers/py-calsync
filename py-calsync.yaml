@@ -9,7 +9,7 @@ rules:
     look_forward: 7 day
 
     transform:
-      - description_append: From $calendar_summary ($calendar_id).
+      - description_append: From $calendar_name ($calendar_id).
   
   - method: copy
     src: Omnigen
@@ -23,7 +23,7 @@ rules:
           all_day_event: false
 
     transform:
-      - description_append: From $calendar_summary ($calendar_id).
+      - description_append: From $calendar_name ($calendar_id).
   
   - method: copy
     src: NBS
@@ -37,4 +37,4 @@ rules:
           all_day_event: false
 
     transform:
-      - description_append: From $calendar_summary ($calendar_id).
+      - description_append: From $calendar_name ($calendar_id).

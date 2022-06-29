@@ -47,12 +47,16 @@ def __run_copy_rule(rule):
     events = src.list_events(
         timeMin=(datetime.utcnow() - look_back).isoformat() + "Z",
         timeMax=(datetime.utcnow() + look_forward).isoformat() + "Z",
+        singleEvents=False,
+        orderBy="updated",
     )
-    logging.info(f"found {len(events)} to copy", events=events)
+    logging.info(f"found {len(events)} events")
 
     for event in events:
+        logging.info(f"processing event {event}")
         try:
             if not __matches_filters(rule, event):
+                logging.info("event did not match filters, skipping")
                 continue
 
             new_event = event.copy()
@@ -61,9 +65,10 @@ def __run_copy_rule(rule):
             if private_copy:
                 new_event.attributes["privateCopy"] = True
 
+            logging.info("running transforms")
             __transform(rule, new_event, src=src)
 
-            logging.info("creating event in dst", event=new_event)
+            logging.info(f"creating event in dst: {new_event}")
             dst.import_event(new_event)
 
         except Exception as ex:

@@ -118,6 +118,8 @@ def __run_copy_rule_test(
                 timeMax=datetime_to_rfc3339(
                     __tdstr_to_rfc3339_forward(expected_look_forward)
                 ),
+                singleEvents=False,
+                orderBy="updated",
             )
 
     for import_data in imported_events_data:
