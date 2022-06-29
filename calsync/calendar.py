@@ -5,6 +5,9 @@ from calsync.util import now
 from calsync.event import Event
 
 
+# Values for Calendar that we ignore (treat as if they weren't there)
+DISALLOWED_SUMMARIES = ["Calendar"]
+
 # list of fields to clear for import/insert operations
 READ_ONLY_EVENT_ATTRIBUTES = [
     #   "anyoneCanAddSelf",
@@ -47,6 +50,13 @@ class Calendar:
             + ", ".join([f"{k}={v}" for k, v in self.attributes.items()])
             + ")"
         )
+
+    def get_name(self):
+        for s in [self.summary, self.summaryOverride, self.id]:
+            if s is not None and s not in DISALLOWED_SUMMARIES:
+                return s
+
+        return self.id
 
     def list_events(
         self,
@@ -96,8 +106,6 @@ def get_calendars():
 
 def resolve_calendar(input):
     """Resolves the input to either a calendar name (summary) or ID"""
-    DISALLOWED_SUMMARIES = ["Calendar"]
-
     if input in DISALLOWED_SUMMARIES:
         raise ValueError(f"disallowed summary input: {input}")
 

@@ -35,6 +35,10 @@ def __setup_mocks(config):
     calendar_bar = Mock(spec=Calendar, id="cid_bar", summary="cs_bar", name="cid_bar")
     calendar_baz = Mock(spec=Calendar, id="cid_baz", summary="cs_baz", name="cid_baz")
 
+    calendar_foo.get_name = Mock(return_value="Foo")
+    calendar_bar.get_name = Mock(return_value="Bar")
+    calendar_baz.get_name = Mock(return_value="Baz")
+
     resolve_calendar_result = {
         "cs_foo": calendar_foo,
         "cs_bar": calendar_bar,
@@ -138,6 +142,15 @@ def event123():
         id="123",
         summary="Event 123",
         description="Event 123",
+        start="2020-01-11T11:11:11Z",
+    )
+
+
+@pytest.fixture
+def event123_nodesc():
+    return Event(
+        id="123",
+        summary="Event 123",
         start="2020-01-11T11:11:11Z",
     )
 
@@ -304,6 +317,38 @@ def test_run_copy_rule_with_description_append_transform_with_variables(
                 del_=["id"],
                 privateCopy=True,
                 description="Event 789\n\nFoo cid_foo cs_foo Bar",
+            ),
+        ],
+    )
+
+
+def test_run_copy_rule_with_description_append_transform_when_no_description(
+    event123_nodesc,
+):
+    config = {
+        "rules": [
+            {
+                "method": "copy",
+                "src": "cs_foo",
+                "dst": "cs_bar",
+                "transform": [
+                    {
+                        "description_append": "Added from $calendar_name $calendar_id $calendar_summary"
+                    }
+                ],
+            }
+        ]
+    }
+
+    __run_copy_rule_test(
+        config,
+        foo_events=[event123_nodesc],
+        bar_expected_events=[
+            __new_event(
+                from_=event123_nodesc,
+                del_=["id"],
+                privateCopy=True,
+                description="\n\nAdded from Foo cid_foo cs_foo",
             ),
         ],
     )

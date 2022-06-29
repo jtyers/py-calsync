@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import sys
 
 from calsync.config import get_config
 from calsync.calendar import resolve_calendar
@@ -36,8 +37,6 @@ def __run_copy_rule(rule):
     src = resolve_calendar(rule["src"])
     dst = resolve_calendar(rule["dst"])
 
-    # TODO: read events in the immediate past and distant future,
-    # and copy from src cal to dst cal
     look_back = parse_timedelta_string(
         rule.get("look_back", COPY_DEFAULTS["look_back"])
     )
@@ -52,19 +51,26 @@ def __run_copy_rule(rule):
     logging.info(f"found {len(events)} to copy", events=events)
 
     for event in events:
-        if not __matches_filters(rule, event):
-            continue
+        try:
+            if not __matches_filters(rule, event):
+                continue
 
-        new_event = event.copy()
+            new_event = event.copy()
 
-        private_copy = rule.get("private_copy", COPY_DEFAULTS["private_copy"])
-        if private_copy:
-            new_event.attributes["privateCopy"] = True
+            private_copy = rule.get("private_copy", COPY_DEFAULTS["private_copy"])
+            if private_copy:
+                new_event.attributes["privateCopy"] = True
 
-        __transform(rule, new_event, src=src)
+            __transform(rule, new_event, src=src)
 
-        logging.info("creating event in dst", event=new_event)
-        dst.import_event(new_event)
+            logging.info("creating event in dst", event=new_event)
+            dst.import_event(new_event)
+
+        except Exception as ex:
+            print("error occurred while processing event:", file=sys.stderr)
+            print(event, file=sys.stderr)
+
+            raise ex
 
 
 def __matches_filters(rule, event):
@@ -87,9 +93,10 @@ def __transform(rule, event, src):
     for transform in rule["transform"]:
         if transform.get("description_append"):
             event.attributes["description"] = (
-                event.attributes["description"]
+                event.attributes.get("description", "")
                 + "\n\n"
                 + transform["description_append"]
                 .replace("$calendar_id", src.id)
                 .replace("$calendar_summary", src.summary)
+                .replace("$calendar_name", src.get_name())
             )
