@@ -1,0 +1,4 @@
+*.json
+.git
+tests
+.pytest_cache

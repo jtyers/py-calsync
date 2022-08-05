@@ -6,7 +6,7 @@ rules:
     dst: Combined calendar
 
     look_back: 7 days
-    look_forward: 7 day
+    look_forward: 30 days
 
     transform:
       - description_append: From $calendar_name ($calendar_id).
@@ -16,7 +16,7 @@ rules:
     dst: Combined calendar
 
     look_back: 7 days
-    look_forward: 7 day
+    look_forward: 30 days
 
     filter:
       - match:
@@ -30,7 +30,7 @@ rules:
     dst: Combined calendar
 
     look_back: 7 days
-    look_forward: 7 day
+    look_forward: 30 days
 
     filter:
       - match:
