@@ -19,8 +19,7 @@ rules:
     look_forward: 30 days
 
     filter:
-      - match:
-          all_day_event: false
+      all_day_event: false
 
     transform:
       - description_append: From $calendar_name ($calendar_id).
@@ -33,8 +32,10 @@ rules:
     look_forward: 30 days
 
     filter:
-      - match:
-          all_day_event: false
+      not:
+        any_of:
+          - all_day_event: true
+          - subject: "Enterprise Security - Technology Fornightly Session"
 
     transform:
       - description_append: From $calendar_name ($calendar_id).

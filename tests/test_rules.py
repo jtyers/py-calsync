@@ -365,7 +365,7 @@ def test_run_copy_rule_with_all_day_events_filtered_out(
                 "method": "copy",
                 "src": "cs_foo",
                 "dst": "cs_bar",
-                "filter": [{"match": {"all_day_event": False}}],
+                "filter": {"all_day_event": False},
             }
         ]
     }
@@ -388,7 +388,7 @@ def test_run_copy_rule_with_all_day_events_only(
                 "method": "copy",
                 "src": "cs_foo",
                 "dst": "cs_bar",
-                "filter": [{"match": {"all_day_event": True}}],
+                "filter": {"all_day_event": True},
             }
         ]
     }

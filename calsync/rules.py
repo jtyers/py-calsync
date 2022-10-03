@@ -5,6 +5,7 @@ import sys
 from calsync.config import get_config
 from calsync.calendar import resolve_calendar
 from calsync.event import event_short_repr
+from calsync.filters import match
 
 from calsync.util import parse_timedelta_string
 
@@ -154,16 +155,13 @@ def __run_remove_deleted_rule(rule):
 
 
 def __matches_filters(rule, event):
-    result = True
+    filter_ = rule.get("filter", [])
 
-    for filter_ in rule.get("filter", []):
-        match = filter_["match"]
+    if not filter_:
+        return True
 
-        if "all_day_event" in match:
-            if event.is_all_day() != match["all_day_event"]:
-                return False
-
-    return result
+    else:
+        return match(filter_, event)
 
 
 def __transform(rule, event, src):
