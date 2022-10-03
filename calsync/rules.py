@@ -4,9 +4,11 @@ import sys
 
 from calsync.config import get_config
 from calsync.calendar import resolve_calendar
-from calsync.event import Event
+from calsync.event import event_short_repr
 
 from calsync.util import parse_timedelta_string
+
+logger = logging.getLogger(__name__)
 
 COPY_DEFAULTS = {
     # the method to use
@@ -29,6 +31,9 @@ def run_rules():
         if method == "copy":
             __run_copy_rule(rule)
 
+        elif method == "remove_deleted":
+            __run_remove_deleted_rule(rule)
+
         else:
             raise ValueError(f'unknown method "${method}"')
 
@@ -44,19 +49,20 @@ def __run_copy_rule(rule):
         rule.get("look_forward", COPY_DEFAULTS["look_forward"])
     )
 
-    events = src.list_events(
+    # copy events from src to dst
+    src_events = src.list_events(
         timeMin=(datetime.utcnow() - look_back).isoformat() + "Z",
         timeMax=(datetime.utcnow() + look_forward).isoformat() + "Z",
         singleEvents=False,
         orderBy="updated",
     )
-    logging.info(f"found {len(events)} events")
+    logger.info(f"found {len(src_events)} events")
 
-    for event in events:
-        logging.info(f"processing event {event}")
+    for event in src_events:
+        logger.info(f"processing event {event_short_repr(event)}")
         try:
             if not __matches_filters(rule, event):
-                logging.info("event did not match filters, skipping")
+                logger.info("event did not match filters, skipping")
                 continue
 
             new_event = event.copy()
@@ -65,11 +71,80 @@ def __run_copy_rule(rule):
             if private_copy:
                 new_event.attributes["privateCopy"] = True
 
-            logging.info("running transforms")
+            logger.info("running transforms")
             __transform(rule, new_event, src=src)
 
-            logging.info(f"creating event in dst: {new_event}")
+            logger.info(f"creating event in dst: {new_event}")
             dst.import_event(new_event)
+
+        except Exception as ex:
+            print("error occurred while processing event:", file=sys.stderr)
+            print(event, file=sys.stderr)
+
+            raise ex
+
+
+def __run_remove_deleted_rule(rule):
+    # check all events in dst have a matching src event
+    if type(rule["src"]) is list:
+        src = [resolve_calendar(x) for x in rule["src"]]
+    else:
+        src = [resolve_calendar(rule["src"])]
+
+    dst = resolve_calendar(rule["dst"])
+
+    look_back = parse_timedelta_string(
+        rule.get("look_back", COPY_DEFAULTS["look_back"])
+    )
+    look_forward = parse_timedelta_string(
+        rule.get("look_forward", COPY_DEFAULTS["look_forward"])
+    )
+
+    src_events = []
+    for src_ in src:
+        src_events.extend(
+            src_.list_events(
+                timeMin=(datetime.utcnow() - look_back).isoformat() + "Z",
+                timeMax=(datetime.utcnow() + look_forward).isoformat() + "Z",
+                singleEvents=False,
+                orderBy="updated",
+            )
+        )
+    logger.info(f"found {len(src_events)} events")
+
+    dst_events = dst.list_events(
+        timeMin=(datetime.utcnow() - look_back).isoformat() + "Z",
+        timeMax=(datetime.utcnow() + look_forward).isoformat() + "Z",
+        singleEvents=False,
+        orderBy="updated",
+    )
+    logger.debug(f"found {len(dst_events)} events")
+
+    for event in dst_events:
+        logger.info(f"processing event {event_short_repr(event)}")
+
+        try:
+            matching_src_events = list(
+                filter(
+                    lambda x: x == event,
+                    src_events,
+                )
+            )
+
+            if not matching_src_events:
+                # no matching source events, so delete
+                if event.is_all_day():
+                    # we skip deletes for all-days (but still warn) as there
+                    # appears to be a bug (or mistake) where many all-days in
+                    # my personal calendar were copied and then removed, particularly
+                    # birthdays
+                    logger.warn(
+                        "no matching source event, it's all-day so won't delete"
+                    )
+                    continue
+
+                logger.info("no matching source event, deleting")
+                dst.delete_event(event)
 
         except Exception as ex:
             print("error occurred while processing event:", file=sys.stderr)

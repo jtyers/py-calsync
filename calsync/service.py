@@ -8,6 +8,7 @@ from googleapiclient.discovery import build
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
     "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/calendar.events",
 ]
 
 CREDENTIALS_FILE = "credentials.json"
@@ -71,4 +72,8 @@ class CalendarService:
 
     def import_event(self, **kwargs):
         result = self.service.events().import_(**kwargs).execute()
+        return result
+
+    def delete_event(self, **kwargs):
+        result = self.service.events().delete(**kwargs).execute()
         return result

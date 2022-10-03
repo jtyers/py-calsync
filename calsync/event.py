@@ -1,6 +1,3 @@
-from copy import deepcopy
-
-
 COPY_SKIP_FIELDS = [
     "anyoneCanAddSelf",  # deprecated
     "attendees",  # to avoid triggering emails
@@ -15,7 +12,12 @@ COPY_SKIP_FIELDS = [
     "reminders",
     "sequence",
     "updated",  # ro
+    # "recurrence",  # causes 403 errors if used in imports
 ]
+
+
+def event_short_repr(evt):
+    return f"Event(id={evt.id}, summary={evt.summary}, start={evt.start}, end={evt.end}, organizer={evt.attributes.get('organizer', {}).get('displayName')})"
 
 
 class Event:
@@ -23,7 +25,7 @@ class Event:
         self.attributes = attributes
 
         # copy these attributes onto the class itself as our code uses them directly
-        for k in ["calendarId", "summary", "start", "end"]:
+        for k in ["calendarId", "summary", "start", "end", "id"]:
             setattr(self, k, attributes.get(k))
 
     def __eq__(self, other):

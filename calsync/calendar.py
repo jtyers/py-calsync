@@ -77,6 +77,17 @@ class Calendar:
         )
         return [Event(calendarId=self.id, **evt) for evt in events_result]
 
+    def delete_event(
+        self,
+        event,
+    ):
+        # Call the Calendar API
+        events_result = get_calendar_service().delete_event(
+            calendarId=self.id,
+            eventId=event.id,
+        )
+        return [Event(calendarId=self.id, **evt) for evt in events_result]
+
     def import_event(self, event):
         new_event = event.copy()
 

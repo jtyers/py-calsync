@@ -38,3 +38,14 @@ rules:
 
     transform:
       - description_append: From $calendar_name ($calendar_id).
+
+  - method: remove_deleted
+    src:
+      - Main calendar
+      - NBS
+      - Omnigen
+    dst: Combined calendar
+
+    look_back: 7 days
+    look_forward: 30 days
+
