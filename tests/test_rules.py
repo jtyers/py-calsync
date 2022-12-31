@@ -8,15 +8,15 @@ from unittest.mock import patch
 from unittest.mock import call
 
 from calsync.calendar import Calendar
-from calsync.rules import COPY_DEFAULTS
-from calsync.rules import run_rules
+from calsync.rules.rules import COPY_DEFAULTS
+from calsync.rules.rules import run_rules
 from calsync.event import Event
 from calsync.util import parse_timedelta_string
 from calsync.util import datetime_to_rfc3339
 
-RESOLVE_CALENDAR_ADDR = "calsync.rules.resolve_calendar"
-GET_CONFIG_ADDR = "calsync.rules.get_config"
-DATETIME_ADDR = "calsync.rules.datetime"
+RESOLVE_CALENDAR_ADDR = "calsync.rules.rules.resolve_calendar"
+GET_CONFIG_ADDR = "calsync.rules.rules.get_config"
+DATETIME_ADDR = "calsync.rules.rules.datetime"
 
 # 'lock' the clock so millisecond-precision datetime assertions work
 utcnow_fixed = datetime.utcnow()

@@ -39,6 +39,35 @@ def run_rules():
             raise ValueError(f'unknown method "${method}"')
 
 
+def gather_errors(f, items):
+    """For the given function, execute it for each item. If an iteration
+    raises an Exception, capture it and continue with the next iteration.
+
+    Returns a list of { item, error } dicts for any errors encountered.
+    The return value of f is discarded (this is intended for use with
+    the __run_*rule functions which don't return anything).
+
+    @param f a function that takes a single argument, the item, as an
+    argument
+    @param items a list of items to iterate through for each invocation
+    """
+    errors = []
+
+    for item in items:
+        try:
+            f(item)
+
+        except Exception as ex:
+            errors.append(
+                {
+                    "item": item,
+                    "error": ex,
+                }
+            )
+
+    return errors
+
+
 def __run_copy_rule(rule):
     src = resolve_calendar(rule["src"])
     dst = resolve_calendar(rule["dst"])

@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from calsync.service import get_calendar_service
 from calsync.util import now
 from calsync.event import Event
